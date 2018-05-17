@@ -78,7 +78,7 @@ intensity_samples = np.array([])
 intensity_samples_y = np.array([])
 
 while(True):
-    print('------------------------------------------------------------------------------')
+    print('---------------------------next frame---------------------------------------------------')
     ret, second_frame = cap.read()
     second_gray = cv2.cvtColor(second_frame, cv2.COLOR_BGR2GRAY)
 
@@ -176,10 +176,10 @@ while(True):
             mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 0, 255), -1)
             foe = np.array([foe_x, foe_y]);
             d_from_foe = good_new - foe;
-            print(d_from_foe/unit_vectors)
-            #d_from_foe_magnitude = np.sqrt((d_from_foe**2).sum())[..., np.newaxis]
+            d_from_foe_y = d_from_foe[:,-1:] #take the y axis elements
+            unit_vectors_y =  unit_vectors[:,-1:] #take y axis elements from unit vector
 
-        #mask = cv2.circle(second_frame, (p,q,), 10, (0, 0, 255), -1)
+            print(np.mean(d_from_foe_y/unit_vectors_y).astype(int))
 
     cv2.imshow('frame',mask)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
