@@ -1,5 +1,6 @@
 #Program to track optical flow  in video camera. 
 import numpy as np
+import time
 import cv2
 
 def CalcFeatures(first_gray, configs):
@@ -69,6 +70,7 @@ features = dict(maxCorners=100, qualityLevel = 0.3, minDistance=7, blockSize=7, 
 #params for lucas kanade optical flow algorithm
 lucas_kanade_params = dict(winSize=(15,15), maxLevel=2, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 ret, first_frame = cap.read()
+time1 = time.time()
 first_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 p0 = CalcFeatures(first_gray, features)
 mask = np.zeros_like(first_frame)
@@ -78,8 +80,11 @@ intensity_samples = np.array([])
 intensity_samples_y = np.array([])
 
 while(True):
-    print('---------------------------next frame---------------------------------------------------')
     ret, second_frame = cap.read()
+    diff = time.time() - time1
+    time1 = time.time()
+    framerate = int(1 /diff)
+    #print('framerate: ' , framerate)
     second_gray = cv2.cvtColor(second_frame, cv2.COLOR_BGR2GRAY)
 
     # if count of p0 is not sufficient get some more features.
@@ -178,8 +183,13 @@ while(True):
             d_from_foe = good_new - foe;
             d_from_foe_y = d_from_foe[:,-1:] #take the y axis elements
             unit_vectors_y =  unit_vectors[:,-1:] #take y axis elements from unit vector
-
-            print(np.mean(d_from_foe_y/unit_vectors_y).astype(int))
+            
+            k = d_from_foe_y/unit_vectors_y
+            ttc_hist, ttc_edges = np.histogram(k,10)
+            ttc_idx = (np.argmax(ttc_hist))
+            ttc_points = k[np.logical_and(k>=ttc_edges[ttc_idx], k<=ttc_edges[ttc_idx+1])].astype(int)
+            ttc_frames = int(np.mean(np.absolute(ttc_points))/10)
+            print('ttc seconds: ', ttc_frames/framerate)
 
     cv2.imshow('frame',mask)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
