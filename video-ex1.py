@@ -78,6 +78,7 @@ unit_vectors_old = np.array([])
 sumx_old = np.array([])
 intensity_samples = np.array([])
 intensity_samples_y = np.array([])
+ttc_frames_list = np.array([])
 
 while(True):
     ret, second_frame = cap.read()
@@ -182,14 +183,15 @@ while(True):
             foe = np.array([foe_x, foe_y]);
             d_from_foe = good_new - foe;
             d_from_foe_y = d_from_foe[:,-1:] #take the y axis elements
-            unit_vectors_y =  unit_vectors[:,-1:] #take y axis elements from unit vector
+            unit_vectors_y =  unit_vectors[:,-1:]*100 #take y axis elements from unit vector
             
             k = d_from_foe_y/unit_vectors_y
             ttc_hist, ttc_edges = np.histogram(k,10)
             ttc_idx = (np.argmax(ttc_hist))
             ttc_points = k[np.logical_and(k>=ttc_edges[ttc_idx], k<=ttc_edges[ttc_idx+1])].astype(int)
-            ttc_frames = int(np.mean(np.absolute(ttc_points))/10)
-            print('ttc seconds: ', ttc_frames/framerate)
+            ttc_frames = int(np.mean(np.absolute(ttc_points)))
+            ttc_frames_list = np.append(ttc_frames_list, ttc_frames);
+            print('ttc frames: ', np.mean(ttc_frames_list)/framerate)
 
     cv2.imshow('frame',mask)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
