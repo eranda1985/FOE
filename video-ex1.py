@@ -73,11 +73,12 @@ ret, first_frame = cap.read()
 time1 = time.time()
 first_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
 p0 = CalcFeatures(first_gray, features)
+p_init = p0.copy();
 mask = np.zeros_like(first_frame)
 unit_vectors_old = np.array([])
-sumx_old = np.array([])
 intensity_samples = np.array([])
 intensity_samples_y = np.array([])
+ttc_frames_list = np.array([])
 
 while(True):
     ret, second_frame = cap.read()
@@ -90,6 +91,8 @@ while(True):
     # if count of p0 is not sufficient get some more features.
     if(p0.shape[0] < 90):
         p0 = CalcFeatures(first_gray, features)
+    if(np.any(p0) == False):
+    	continue
     if(p0.shape[0] <= 1):
         p0 = CalcFeatures(first_gray, features)
 
@@ -180,16 +183,9 @@ while(True):
             foe_y = kalman_y[-1].astype(int)
             mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 0, 255), -1)
             foe = np.array([foe_x, foe_y]);
-            d_from_foe = good_new - foe;
-            d_from_foe_y = d_from_foe[:,-1:] #take the y axis elements
-            unit_vectors_y =  unit_vectors[:,-1:] #take y axis elements from unit vector
-            
-            k = d_from_foe_y/unit_vectors_y
-            ttc_hist, ttc_edges = np.histogram(k,10)
-            ttc_idx = (np.argmax(ttc_hist))
-            ttc_points = k[np.logical_and(k>=ttc_edges[ttc_idx], k<=ttc_edges[ttc_idx+1])].astype(int)
-            ttc_frames = int(np.mean(np.absolute(ttc_points))/10)
-            print('ttc seconds: ', ttc_frames/framerate)
+            #d_from_foe = good_new - foe;
+            #d_from_foe_y = d_from_foe[:,-1:] #take the y axis elements
+            #print('postive y' , np.mean(d_from_foe_y[d_from_foe_y > 0]))
 
     cv2.imshow('frame',mask)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
