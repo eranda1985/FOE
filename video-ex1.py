@@ -2,65 +2,7 @@
 import numpy as np
 import time
 import cv2
-
-def CalcFeatures(first_gray, configs):
-    featureElems = cv2.goodFeaturesToTrack(first_gray, **configs)
-    return featureElems
-
-def Cos_Similarity(v0, v1):
-    dot_product = np.dot(v0, v1)
-    norm_v0 = np.linalg.norm(v0)
-    norm_v1 = np.linalg.norm(v1)
-    return dot_product/(norm_v0 * norm_v1)
-
-def perp( a ) :
-    b = np.empty_like(a)
-    b[0] = -a[1]
-    b[1] = a[0]
-    return b
-
-# line segment a given by endpoints a1, a2
-# line segment b given by endpoints b1, b2
-# return 
-def seg_intersect(a1,a2, b1,b2) :
-    da = a2-a1
-    db = b2-b1
-    dp = a1-b1
-    dap = perp(da)
-    denom = np.dot( dap, db)
-    num = np.dot( dap, dp )
-    return (num / denom.astype(float))*db + b1
-
-def Kalman_Filter(samples):
-    # intial parameters
-    n_iter = samples.size
-    sz = (n_iter,)
-
-    Q = 1e-5 # process variance
-
-    # allocate space for arrays
-    xhat=np.zeros(sz)      # a posteri estimate of x
-    P=np.zeros(sz)         # a posteri error estimate
-    xhatminus=np.zeros(sz) # a priori estimate of x
-    Pminus=np.zeros(sz)    # a priori error estimate
-    K=np.zeros(sz)         # gain or blending factor
-
-    R = 0.1**2 # estimate of measurement variance, change to see effect
-    # intial guesses
-    xhat[0] = 0.0
-    P[0] = 1.0
-
-    for k in range(1,n_iter):
-        # time update
-        xhatminus[k] = xhat[k-1]
-        Pminus[k] = P[k-1]+Q
-
-        # measurement update
-        K[k] = Pminus[k]/( Pminus[k]+R )
-        xhat[k] = xhatminus[k]+K[k]*(samples[k]-xhatminus[k])
-        P[k] = (1-K[k])*Pminus[k]
-
-    return xhat 
+import foe_utils.foe_utils as fu
 
 cap = cv2.VideoCapture(0)
 
@@ -69,13 +11,14 @@ features = dict(maxCorners=100, qualityLevel = 0.3, minDistance=7, blockSize=7, 
 
 #params for lucas kanade optical flow algorithm
 lucas_kanade_params = dict(winSize=(15,15), maxLevel=2, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+
+# initial frame capture
 ret, first_frame = cap.read()
+
 time1 = time.time()
 first_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
-p0 = CalcFeatures(first_gray, features)
-p_init = p0.copy();
+p0 = fu.calcFeatures(first_gray, features)
 mask = np.zeros_like(first_frame)
-unit_vectors_old = np.array([])
 intensity_samples = np.array([])
 intensity_samples_y = np.array([])
 ttc_frames_list = np.array([])
@@ -90,11 +33,11 @@ while(True):
 
     # if count of p0 is not sufficient get some more features.
     if(p0.shape[0] < 90):
-        p0 = CalcFeatures(first_gray, features)
+        p0 = fu.calcFeatures(first_gray, features)
     if(np.any(p0) == False):
     	continue
     if(p0.shape[0] <= 1):
-        p0 = CalcFeatures(first_gray, features)
+        p0 = fu.calcFeatures(first_gray, features)
 
     p1, st, err = cv2.calcOpticalFlowPyrLK(first_gray, second_gray, p0, None, **lucas_kanade_params)
     
@@ -113,12 +56,9 @@ while(True):
     A = np.array([])
     C = np.array([])
 
-    for i,(base,unit,unit_old) in enumerate(zip(good_old, unit_vectors,unit_vectors_old)):
+    for i,(base,unit) in enumerate(zip(good_old, unit_vectors)):
         base = base.astype(int)
         x,y = base.ravel()
-        #mm = np.array([0,0])
-        
-        #if(unit_old.size > 0 and Cos_Similarity(unit_old, unit) > 0.9):
         mm = unit*100
         tan = mm[1]/mm[0]
         c = y - (tan*x)
@@ -151,7 +91,7 @@ while(True):
             y3 = a[0]*(1.) + c[0]
             #x4 = 2.0
             y4 = a[0]*(2.) + c[0]
-            intersect = seg_intersect(np.array([1.0, y1]), np.array([2.0, y2]), np.array([1.0, y3]), np.array([2.0, y4]))
+            intersect = fu.seg_intersect(np.array([1.0, y1]), np.array([2.0, y2]), np.array([1.0, y3]), np.array([2.0, y4]))
             points = np.append(points, intersect[0])
             points_y = np.append(points_y, intersect[1])
 
@@ -176,8 +116,8 @@ while(True):
             #intensity = second_gray[p][q]
             intensity_samples = np.append(intensity_samples, p)
             intensity_samples_y = np.append(intensity_samples_y, q)
-            kalman = Kalman_Filter(intensity_samples)
-            kalman_y = Kalman_Filter(intensity_samples_y)
+            kalman = fu.kalman_Filter(intensity_samples)
+            kalman_y = fu.kalman_Filter(intensity_samples_y)
             #print(kalman)
             foe_x = kalman[-1].astype(int)
             foe_y = kalman_y[-1].astype(int)
@@ -190,8 +130,6 @@ while(True):
     cv2.imshow('frame',mask)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
         break
-
-    unit_vectors_old = unit_vectors.copy()
 
 cap.release()
 cv2.destroyAllWindows()
