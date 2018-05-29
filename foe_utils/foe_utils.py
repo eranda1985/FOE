@@ -2,12 +2,12 @@ import numpy as np
 import cv2 
 
 # Returns shi-tomasi features
-def calcFeatures(first_gray, configs):
+def calcfeatures(first_gray, configs):
     featureElems = cv2.goodFeaturesToTrack(first_gray, **configs)
     return featureElems
 
 # Method for checking vector similarity 
-def Cos_Similarity(v0, v1):
+def cos_similarity(v0, v1):
     dot_product = np.dot(v0, v1)
     norm_v0 = np.linalg.norm(v0)
     norm_v1 = np.linalg.norm(v1)
@@ -32,7 +32,7 @@ def seg_intersect(a1,a2, b1,b2) :
     return (num / denom.astype(float))*db + b1
 
 # Method for Kalman Filter
-def kalman_Filter(samples):
+def kalman_filter(samples):
     # intial parameters
     n_iter = samples.size
     sz = (n_iter,)

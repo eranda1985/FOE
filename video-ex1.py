@@ -12,12 +12,12 @@ features = dict(maxCorners=100, qualityLevel = 0.3, minDistance=7, blockSize=7, 
 #params for lucas kanade optical flow algorithm
 lucas_kanade_params = dict(winSize=(15,15), maxLevel=2, criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
-# initial frame capture
+# initial frame grab
 ret, first_frame = cap.read()
 
 time1 = time.time()
 first_gray = cv2.cvtColor(first_frame, cv2.COLOR_BGR2GRAY)
-p0 = fu.calcFeatures(first_gray, features)
+p0 = fu.calcfeatures(first_gray, features)
 mask = np.zeros_like(first_frame)
 intensity_samples = np.array([])
 intensity_samples_y = np.array([])
@@ -33,11 +33,11 @@ while(True):
 
     # if count of p0 is not sufficient get some more features.
     if(p0.shape[0] < 90):
-        p0 = fu.calcFeatures(first_gray, features)
+        p0 = fu.calcfeatures(first_gray, features)
     if(np.any(p0) == False):
     	continue
     if(p0.shape[0] <= 1):
-        p0 = fu.calcFeatures(first_gray, features)
+        p0 = fu.calcfeatures(first_gray, features)
 
     p1, st, err = cv2.calcOpticalFlowPyrLK(first_gray, second_gray, p0, None, **lucas_kanade_params)
     
@@ -116,8 +116,8 @@ while(True):
             #intensity = second_gray[p][q]
             intensity_samples = np.append(intensity_samples, p)
             intensity_samples_y = np.append(intensity_samples_y, q)
-            kalman = fu.kalman_Filter(intensity_samples)
-            kalman_y = fu.kalman_Filter(intensity_samples_y)
+            kalman = fu.kalman_filter(intensity_samples)
+            kalman_y = fu.kalman_filter(intensity_samples_y)
             #print(kalman)
             foe_x = kalman[-1].astype(int)
             foe_y = kalman_y[-1].astype(int)
