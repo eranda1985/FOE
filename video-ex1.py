@@ -68,7 +68,8 @@ while(True):
 
         mm = mm.astype(int)
         p,q = mm.ravel()
-        mask = cv2.arrowedLine(second_frame, (x,y),(x+p,y+q), (0, 255, 0), 2, 8, 0, 0.5)           
+        mask = second_frame.copy()
+        #mask = cv2.arrowedLine(second_frame, (x,y),(x+p,y+q), (0, 255, 0), 2, 8, 0, 0.5)           
 
     A = np.vstack([A, -1*np.ones(len(A))]).T
     C = C.reshape(-1,1)
