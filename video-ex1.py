@@ -3,6 +3,7 @@ import numpy as np
 import time
 import cv2
 import foe_utils.foe_utils as fu
+import background_model.background_model as bgmodel
 
 cap = cv2.VideoCapture(0)
 
@@ -110,7 +111,10 @@ while(True):
 
         p = np.mean(f_points).astype(int)
         q = np.mean(f_points_y).astype(int)
-        
+
+        backgnd = bgmodel.background_model(second_frame)
+        backgndColor = cv2.cvtColor(backgnd, cv2.COLOR_GRAY2BGR)
+
         # Get the intensity of pixel at p,q
         if((0<= p < 480) and (0<=q < 640)):
             #intensity = second_gray[p][q]
@@ -121,13 +125,25 @@ while(True):
             #print(kalman)
             foe_x = kalman[-1].astype(int)
             foe_y = kalman_y[-1].astype(int)
-            mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 0, 255), -1)
+            if(foe_y >= 32 and foe_x >= 32):
+                center_patch = backgnd[foe_y-32:foe_y+32, foe_x-32:foe_x+32]
+                #cv2.imshow('center_patch', center_patch)
+                #cv2.waitKey(1)
+                whitePixels = np.sum(center_patch==255)
+                blackPixels = np.sum(center_patch==0)
+                if(blackPixels >= ((whitePixels+blackPixels)/4)):
+                    mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 0, 255), -1)
+                    backgndColor = cv2.circle(backgndColor, (foe_x,foe_y,), 10, (0, 0, 255), -1)
+                else:
+                    mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 255, 255), -1)
+                    backgndColor = cv2.circle(backgndColor, (foe_x,foe_y,), 10, (0, 255, 255), -1)
+            else:
+                mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 255, 255), -1)
+                backgndColor = cv2.circle(backgndColor, (foe_x,foe_y,), 10, (0, 255, 255), -1)
             foe = np.array([foe_x, foe_y]);
-            #d_from_foe = good_new - foe;
-            #d_from_foe_y = d_from_foe[:,-1:] #take the y axis elements
-            #print('postive y' , np.mean(d_from_foe_y[d_from_foe_y > 0]))
 
     cv2.imshow('frame',mask)
+    cv2.imshow('background', backgndColor)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
         break
 
