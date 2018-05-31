@@ -35,7 +35,7 @@ while(True):
     # if count of p0 is not sufficient get some more features.
     if(p0.shape[0] < 90):
         p0 = fu.calcfeatures(first_gray, features)
-    if(np.any(p0) == False):
+    if((np.any(p0) == False) or (p0 is None)):
     	continue
     if(p0.shape[0] <= 1):
         p0 = fu.calcfeatures(first_gray, features)
