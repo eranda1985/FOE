@@ -77,6 +77,8 @@ while(True):
     points = np.array([])
     points_y = np.array([])
 
+    backgnd = bgmodel.background_model(second_frame)
+
     if(A.size > 0):
         start_a = A[0][0]
         start_c = C[0][0]
@@ -113,7 +115,6 @@ while(True):
         p = np.mean(f_points).astype(int)
         q = np.mean(f_points_y).astype(int)
 
-        backgnd = bgmodel.background_model(second_frame)
         #backgndColor = cv2.cvtColor(backgnd, cv2.COLOR_GRAY2BGR)
 
         # Get the intensity of pixel at p,q
@@ -132,7 +133,7 @@ while(True):
                 #cv2.waitKey(1)
                 whitePixels = np.sum(center_patch==255)
                 blackPixels = np.sum(center_patch==0)
-                if(blackPixels >= ((whitePixels+blackPixels)/5)):
+                if(whitePixels >= ((whitePixels+blackPixels)/5)):
                     mask = cv2.circle(second_frame, (foe_x,foe_y,), 10, (0, 0, 255), -1)
                     #backgndColor = cv2.circle(backgndColor, (foe_x,foe_y,), 10, (0, 0, 255), -1)
                 else:
@@ -144,7 +145,7 @@ while(True):
             foe = np.array([foe_x, foe_y]);
 
     cv2.imshow('frame',mask)
-    #cv2.imshow('background', backgndColor)
+    cv2.imshow('background', backgnd)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
         break
 
