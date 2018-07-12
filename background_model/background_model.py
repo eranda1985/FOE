@@ -29,19 +29,16 @@ def background_model(frame):
 
 	morph = cv2.erode(morph,kernel2,iterations = 5)
 	clone = cv2.bitwise_not(morph.copy())
-	masked_image = clone.copy()
 
 	im2, contours, hierarchy = cv2.findContours(clone.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-	#cnts = contours[0]
-
+	
 	for c in contours:
 		#print([c])
 		epsilon = 0.01*cv2.arcLength(c,True)
 		approx = cv2.approxPolyDP(c,epsilon,True)
 		cv2.fillPoly(mask, [approx], (255,)*1)
-		masked_image = cv2.bitwise_and(clone, mask)
 		#cv2.drawContours(frame, [approx], -1, (0, 255, 0), 2)
-		#cv2.imshow('frame', masked_image)
+		#cv2.imshow('mask', mask)
 		
 
 	'''for (x, y, window) in sliding_window(morph, stepSize=32, windowSize=(winW, winH)):
@@ -61,7 +58,7 @@ def background_model(frame):
 			#print('black domination: ', black)
 			clone[y:y+winH, x:x+winW].fill(0)'''
 
-	return masked_image
+	return mask
 	#cv2.imshow('frame1', clone)
 	#cv2.imshow('frame2', morph)
 
