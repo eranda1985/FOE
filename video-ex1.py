@@ -145,7 +145,7 @@ while(True):
             foe = np.array([foe_x, foe_y]);
 
     cv2.imshow('frame',mask)
-    cv2.imshow('background', backgnd)
+    #cv2.imshow('background', backgndColor)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
         break
 
