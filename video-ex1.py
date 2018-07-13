@@ -4,6 +4,7 @@ import time
 import cv2
 import foe_utils.foe_utils as fu
 import background_model.background_model as bgmodel
+from threading import Thread
 
 cap = cv2.VideoCapture(0)
 
@@ -77,7 +78,9 @@ while(True):
     points = np.array([])
     points_y = np.array([])
 
-    backgnd = bgmodel.background_model(second_frame)
+    Thread(target=bgmodel.background_model, args=((second_frame),)).start()
+    #bgmodel.background_model(second_frame)
+    backgnd = bgmodel.GetMask()
 
     if(A.size > 0):
         start_a = A[0][0]
@@ -145,7 +148,7 @@ while(True):
             foe = np.array([foe_x, foe_y]);
 
     cv2.imshow('frame',mask)
-    #cv2.imshow('background', backgndColor)
+    #cv2.imshow('background', backgnd)
     if(cv2.waitKey(1) & 0xFF == ord('q')):
         break
 
