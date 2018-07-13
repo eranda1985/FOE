@@ -6,6 +6,7 @@ import time
 kernel = np.ones((5,5),np.uint8)
 kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
 (winW, winH) = (64, 64)
+mask = np.zeros((64,64))
 
 # sliding window function
 def sliding_window(image, stepSize, windowSize):
@@ -16,6 +17,7 @@ def sliding_window(image, stepSize, windowSize):
 
 def background_model(frame):
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	global mask 
 	mask = np.zeros_like(gray)
 	blur = gray.copy()
 	for i in range(1,55):
@@ -27,7 +29,7 @@ def background_model(frame):
 		morph = cv2.morphologyEx(th, cv2.MORPH_OPEN, kernel)
 		morph = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
 
-	morph = cv2.erode(morph,kernel2,iterations = 5)
+	morph = cv2.erode(morph,kernel2,iterations = 7)
 	clone = cv2.bitwise_not(morph.copy())
 
 	im2, contours, hierarchy = cv2.findContours(clone.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -58,12 +60,15 @@ def background_model(frame):
 			#print('black domination: ', black)
 			clone[y:y+winH, x:x+winW].fill(0)'''
 
-	return mask
+	#mask = mask
 	#cv2.imshow('frame1', clone)
 	#cv2.imshow('frame2', morph)
 
 	#if(cv2.waitKey(1) & 0xFF == ord('q')):
 		#break
+
+def GetMask():
+	return mask
 
 #cap.release()
 #cv2.destroyAllWindows()
