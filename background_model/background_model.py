@@ -4,8 +4,9 @@ import time
 
 # 
 kernel = np.ones((5,5),np.uint8)
-kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT,(3,3))
+kernel2 = cv2.getStructuringElement(cv2.MORPH_RECT,(5,5))
 (winW, winH) = (64, 64)
+mask = np.zeros((64,64))
 
 # sliding window function
 def sliding_window(image, stepSize, windowSize):
@@ -16,6 +17,8 @@ def sliding_window(image, stepSize, windowSize):
 
 def background_model(frame):
 	gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+	global mask 
+	mask = np.zeros_like(gray)
 	blur = gray.copy()
 	for i in range(1,55):
 		blur = cv2.GaussianBlur(blur,(11,11),0)
@@ -26,10 +29,21 @@ def background_model(frame):
 		morph = cv2.morphologyEx(th, cv2.MORPH_OPEN, kernel)
 		morph = cv2.morphologyEx(th, cv2.MORPH_CLOSE, kernel)
 
-	morph = cv2.erode(morph,kernel2,iterations = 3)
-	clone = morph.copy()
+	morph = cv2.erode(morph,kernel2,iterations = 7)
+	clone = cv2.bitwise_not(morph.copy())
 
-	for (x, y, window) in sliding_window(morph, stepSize=32, windowSize=(winW, winH)):
+	im2, contours, hierarchy = cv2.findContours(clone.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+	
+	for c in contours:
+		#print([c])
+		epsilon = 0.01*cv2.arcLength(c,True)
+		approx = cv2.approxPolyDP(c,epsilon,True)
+		cv2.fillPoly(mask, [approx], (255,)*1)
+		#cv2.drawContours(frame, [approx], -1, (0, 255, 0), 2)
+		#cv2.imshow('mask', mask)
+		
+
+	'''for (x, y, window) in sliding_window(morph, stepSize=32, windowSize=(winW, winH)):
 		# take only windows that are of desired size
 		if window.shape[0] != winH or window.shape[1] != winW:
 			continue
@@ -38,19 +52,23 @@ def background_model(frame):
 		white = np.sum(window==255)
 		black = np.sum(window==0)
 				
+		
 		if(white > black):
-			print('white domination: ', white)
+			#print('white domination: ', white)
 			clone[y:y+winH, x:x+winW].fill(255)
 		else:
-			print('black domination: ', black)
-			clone[y:y+winH, x:x+winW].fill(0)
+			#print('black domination: ', black)
+			clone[y:y+winH, x:x+winW].fill(0)'''
 
-	return clone
+	#mask = mask
 	#cv2.imshow('frame1', clone)
 	#cv2.imshow('frame2', morph)
 
 	#if(cv2.waitKey(1) & 0xFF == ord('q')):
 		#break
+
+def GetMask():
+	return mask
 
 #cap.release()
 #cv2.destroyAllWindows()
